@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ease Bot - Market Data</title>
+
+  <link rel="stylesheet" href="css/marketcss.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <script>
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelector(".tablinks").click();
+    });
+
+    var socket = io.connect('https://evolving-ghastly-rabbit.ngrok-free.app');
+    socket.on('On_Market_Data_Update', function (data) {
+      updateTableRow(data);
+    });
+
+    function updateTableRow(data) {
+    var existingRow = document.getElementById(data.ticker);
+    if (!existingRow) {
+        var newRow = document.createElement('tr');
+        newRow.id = data.ticker;
+
+        var symbolCell = document.createElement('td');
+        symbolCell.textContent = data.ticker;
+        newRow.appendChild(symbolCell);
+
+        var timeCell = document.createElement('td');
+        timeCell.textContent = data.time;
+        newRow.appendChild(timeCell);
+
+        var priceCells = ['bid', 'ask', 'last', 'open', 'close', 'high', 'low', 'spread'];
+        for (var i = 0; i < priceCells.length; i++) {
+            var priceCell = document.createElement('td');
+            priceCell.textContent = data[priceCells[i]].toFixed(2);
+            newRow.appendChild(priceCell);
+        }
+
+        var volumeCell = document.createElement('td');
+        volumeCell.textContent = data.volume;
+        newRow.appendChild(volumeCell);
+
+        var tickvolumeCell = document.createElement('td');
+        tickvolumeCell.textContent = data.tick_volume;
+        newRow.appendChild(tickvolumeCell);
+
+        var tableBody = document.querySelector('#marketDataTable tbody');
+        tableBody.appendChild(newRow);
+    } else {
+        var cells = existingRow.cells;
+        cells[0].textContent = data.ticker;
+        cells[1].textContent = data.time; // Format the time here if needed
+        var prevBid = parseFloat(cells[2].textContent);
+        var prevAsk = parseFloat(cells[3].textContent);
+        cells[2].textContent = data.bid.toFixed(2);
+        cells[3].textContent = data.ask.toFixed(2);
+        cells[4].textContent = data.last.toFixed(2);
+        cells[5].textContent = data.open.toFixed(2);
+        cells[6].textContent = data.close.toFixed(2);
+        cells[7].textContent = data.high.toFixed(2);
+        cells[8].textContent = data.low.toFixed(2);
+        cells[9].textContent = data.spread.toFixed(2);
+        cells[10].textContent = data.volume;
+        cells[11].textContent = data.tick_volume;
+        var newBid = parseFloat(data.bid.toFixed(2));
+        var newAsk = parseFloat(data.ask.toFixed(2));
+
+        cells[2].style.color = newBid < prevBid ? 'red' : 'blue';
+        cells[3].style.color = newAsk < prevAsk ? 'red' : 'blue';
+    }
+}
+
+  </script>
+    <script type="module" src="firebase-script.js"></script>
+</head>
+
+<body>
+  <nav>
+    <div class="logo">
+      <img src="media/TRADING_BOT.png" alt="Logo">
+    </div>
+    <div class="menu0">
+      <i class="ri-menu-3-line"></i>
+    </div>
+    <ul class="nav-links">
+      <li><a href="home.html">Home</a></li>
+      <li><a href="market.html" class="active">Market</a></li>
+      <li><a href="news.html">News</a></li>
+      <li><a href="trades.html">Trades</a></li>
+      <li><button class="btn1" id="logout-button">Logout</button></li>
+    </ul>
+  </nav>
+  <div class="tab">
+    <button class="tablinks" onclick="openTab(event, 'MarketData')">Market Data</button>
+  </div>
+
+  <div id="MarketData" class="tabcontent">
+    <table id="marketDataTable">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Time</th>
+          <th>Bid</th>
+          <th>Ask</th>
+          <th>Last</th>
+          <th>Open</th>
+          <th>Close</th>
+          <th>High</th>
+          <th>Low</th>
+          <th>Spread</th>
+          <th>Volume</th>
+          <th>Tick Volume</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="footer-distributed">
+    <div class="footer-left">
+      <h3><img src="media/TRADING_BOT.png" alt=""></h3>
+
+
+      <p class="footer-company-name">&copy; 2024 Ease Bot. All rights reserved.</p>
+    </div>
+
+    <div class="footer-center">
+      <div>
+        <i class="ri-map-pin-2-line"></i>
+        <p>Karachi, Pakistan</p>
+      </div>
+
+      <div>
+        <i class="ri-phone-line"></i>
+        <p>+92 332 317 0984</p>
+      </div>
+
+      <div>
+        <i class="ri-mail-line"></i>
+        <p><a href="mailto:support@company.com">muhammad.13122@iqra.edu.pk</a></p>
+      </div>
+    </div>
+
+
+    <div class="footer-icons">
+
+      <a><i class="ri-facebook-circle-fill"></i></a>
+      <a><i class="ri-twitter-x-fill"></i></a>
+      <a href="#"><i class="ri-linkedin-box-fill"></i></i></a>
+      <a href="#"><i class="ri-github-fill"></i></i></a>
+
+    </div>
+
+    </div>
+
+  </footer>
+
+
+</body>
+
+</html>

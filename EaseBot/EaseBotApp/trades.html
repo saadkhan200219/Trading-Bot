@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ease Bot - Trades</title>
+
+  <link rel="stylesheet" href="css/tradescss.css">
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <script>
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.querySelector(".tablinks").click();
+    });
+
+    function signalBot() {
+      var apiUrl;
+      var btnBot = document.getElementById("botButton");
+
+      if (btnBot.textContent == "Start Bot") {
+        apiUrl = 'https://mouse-funky-tahr.ngrok-free.app/start-bot';
+      } else {
+        apiUrl = 'https://mouse-funky-tahr.ngrok-free.app/stop-bot';
+      }
+
+      fetch(apiUrl, {
+        headers: {
+          "ngrok-skip-browser-warning": "69420"
+        }
+      })
+        .then(response => {
+          if (!response.ok) {
+            alert("Unable to signal bot. Network unstable.");
+            throw new Error('Network response was not ok');
+          }
+          return response.json();
+        })
+        .then(data => {
+          alert(data.Message);
+          if (data.Status == 1) {
+            btnBot.textContent = "Stop Bot";
+          } else {
+            btnBot.textContent = "Start Bot";
+          }
+        })
+        .catch(error => {
+          alert("There was a problem with the Bot API.");
+          console.error('There was a problem with the signal operation:', error);
+        });
+    }
+
+    var socket = io.connect('https://evolving-ghastly-rabbit.ngrok-free.app');
+    socket.on('On_Trades_Data_Update', function (data) {
+      updateTrades(data);
+    });
+
+    socket.on('On_History_Data_Update', function (data) {
+      updateHistory(data)
+    });
+
+    function updateTrades(data) {
+      var existingRow = document.getElementById(data.ticket);
+      if (!existingRow) {
+        var newRow = document.createElement('tr');
+        newRow.id = data.ticket;
+
+        var symbolCell = document.createElement('td');
+        var ticketCell = document.createElement('td');
+        var timeCell = document.createElement('td');
+        var typeCell = document.createElement('td');
+        var volumeCell = document.createElement('td');
+        var tradePriceCell = document.createElement('td');
+        var stoplossCell = document.createElement('td');
+        var takeProfitCell = document.createElement('td');
+        var priceCell = document.createElement('td');
+        var profitCell = document.createElement('td');
+        var changeCell = document.createElement('td');
+        var commentCell = document.createElement('td');
+
+        symbolCell.textContent = data.symbol;
+        ticketCell.textContent = data.ticket;
+        timeCell.textContent = data.time;
+        typeCell.textContent = data.type == 0 ? "Buy" : "Sell";
+        volumeCell.textContent = data.volume;
+        tradePriceCell.textContent = data.tradePrice;
+        stoplossCell.textContent = data.stopLoss;
+        takeProfitCell.textContent = data.takeProfit;
+        priceCell.textContent = data.price;
+        profitCell.textContent = data.profit.toFixed(6);
+        changeCell.textContent = data.change.toFixed(2);
+        commentCell.textContent = data.identity;
+
+        newRow.appendChild(symbolCell);
+        newRow.appendChild(ticketCell);
+        newRow.appendChild(timeCell);
+        newRow.appendChild(typeCell);
+        newRow.appendChild(volumeCell);
+        newRow.appendChild(tradePriceCell);
+        newRow.appendChild(stoplossCell);
+        newRow.appendChild(takeProfitCell);
+        newRow.appendChild(priceCell);
+        newRow.appendChild(profitCell);
+        newRow.appendChild(changeCell);
+        newRow.appendChild(commentCell);
+
+        typeCell.style.background = data.type == 0 ? 'orange' : 'seagreen';
+        var tableBody = document.querySelector('#tradesDataTable tbody');
+        tableBody.appendChild(newRow);
+      }
+      else {
+        var cells = existingRow.cells;
+        cells[0].textContent = data.symbol;
+        cells[1].textContent = data.ticket;
+        cells[2].textContent = data.time;
+        cells[3].textContent = data.type == 0 ? "Buy" : "Sell";
+        cells[4].textContent = data.volume;
+        cells[5].textContent = data.tradePrice;
+        cells[6].textContent = data.stopLoss;
+        cells[7].textContent = data.takeProfit;
+        cells[8].textContent = data.price
+        cells[9].textContent = data.profit.toFixed(6);
+        cells[10].textContent = data.change.toFixed(2);
+        cells[11].textContent = data.identity;
+
+        cells[9].style.color = data.profit < 0 ? 'red' : 'blue';
+      }
+    }
+
+    function updateHistory(data) {
+      if (data.profit == 0 || data.symbol == "") return
+      var existingRow = document.getElementById('history-' + data.ticket);
+      if (!existingRow) {
+        var newRow = document.createElement('tr');
+        newRow.id = 'history-' + data.ticket;
+
+        var symbolCell = document.createElement('td');
+        var ticketCell = document.createElement('td');
+        var timeCell = document.createElement('td');
+        var typeCell = document.createElement('td');
+        var volumeCell = document.createElement('td');
+        var priceCell = document.createElement('td');
+        var commissionCell = document.createElement('td');
+        var swapCell = document.createElement('td');
+        var profitCell = document.createElement('td');
+        var commentCell = document.createElement('td');
+
+        symbolCell.textContent = data.symbol;
+        ticketCell.textContent = data.ticket;
+        timeCell.textContent = data.time;
+        typeCell.textContent = data.type == 0 ? "Buy" : "Sell";
+        volumeCell.textContent = data.volume;
+        priceCell.textContent = data.price.toFixed(2);
+        commissionCell.textContent = data.commission.toFixed(2);
+        swapCell.textContent = data.swap.toFixed(2);
+        profitCell.textContent = data.profit.toFixed(6);
+        commentCell.textContent = data.comment;
+
+        newRow.appendChild(symbolCell);
+        newRow.appendChild(ticketCell);
+        newRow.appendChild(timeCell);
+        newRow.appendChild(typeCell);
+        newRow.appendChild(volumeCell);
+        newRow.appendChild(priceCell);
+        newRow.appendChild(commissionCell);
+        newRow.appendChild(swapCell);
+        newRow.appendChild(profitCell);
+        newRow.appendChild(commentCell);
+
+        typeCell.style.background = data.type == 0 ? 'orange' : 'seagreen';
+        if (data.reason == 4)
+          priceCell.style.background = 'lightpink';
+        else if (data.reason == 5)
+          priceCell.style.background = 'lightblue';
+        if (data.profit != 0)
+          profitCell.style.color = data.profit < 0 ? 'red' : 'blue';
+
+        var tableBody = document.querySelector('#historyDataTable tbody');
+        tableBody.appendChild(newRow);
+      } else {
+        var cells = existingRow.cells;
+        cells[0].textContent = data.symbol;
+        cells[1].textContent = data.ticket;
+        cells[2].textContent = data.time;
+        cells[3].textContent = data.type == 0 ? "Buy" : "Sell";
+        cells[4].textContent = data.volume;
+        cells[5].textContent = data.price.toFixed(6);
+        cells[6].textContent = data.commission.toFixed(6);
+        cells[7].textContent = data.swap.toFixed(6);
+        cells[8].textContent = data.profit.toFixed(6);
+        cells[9].textContent = data.comment;
+      }
+    }
+
+  </script>
+  <script type="module" src="firebase-script.js"></script>
+</head>
+
+<body>
+  <nav>
+    <div class="logo">
+      <img src="media/TRADING_BOT.png" alt="Logo">
+    </div>
+    <div class="menu0">
+      <i class="ri-menu-3-line"></i>
+    </div>
+    <ul class="nav-links">
+      <li><a href="home.html">Home</a></li>
+      <li><a href="market.html">Market</a></li>
+      <li><a href="news.html">News</a></li>
+      <li><a href="trades.html" class="active">Trades</a></li>
+      <li><button class="btn1" id="logout-button">Logout</button></li>
+    </ul>
+  </nav>
+
+
+  <div class="tab">
+    <button class="tablinks" onclick="openTab(event, 'ActiveTrades')">Active Trades</button>
+    <button class="tablinks" onclick="openTab(event, 'HistoryData')">History Data</button>
+  </div>
+
+  <div id="ActiveTrades" class="tabcontent">
+    <table id="tradesDataTable">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Ticket</th>
+          <th>Time</th>
+          <th>Type</th>
+          <th>Volume</th>
+          <th>Trade Price</th>
+          <th>S/L</th>
+          <th>T/P</th>
+          <th>Price</th>
+          <th>Profit</th>
+          <th>Change %</th>
+          <th>Identity</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Table rows will be added dynamically here -->
+      </tbody>
+      <tfoot>
+      </tfoot>
+    </table>
+    <div style="display: flex; justify-content: flex-end;">
+      <iframe id="hiddenFrame" style="display: none;"></iframe>
+      <button id="botButton" class="btn1" onclick="signalBot()">Start Bot</button>
+    </div>
+  </div>
+
+  <div id="HistoryData" class="tabcontent">
+    <table id="historyDataTable">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Ticket</th>
+          <th>Time</th>
+          <th>Type</th>
+          <th>Volume</th>
+          <th>Price</th>
+          <th>Commission</th>
+          <th>Swap</th>
+          <th>Profit</th>
+          <th>Comment</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Table rows will be added dynamically here -->
+      </tbody>
+    </table>
+  </div>
+
+
+
+  <footer class="footer-distributed">
+    <div class="footer-left">
+      <h3><img src="media/TRADING_BOT.png" alt=""></h3>
+
+
+      <p class="footer-company-name">&copy; 2024 Ease Bot. All rights reserved.</p>
+    </div>
+
+    <div class="footer-center">
+      <div>
+        <i class="ri-map-pin-2-line"></i>
+        <p>Karachi, Pakistan</p>
+      </div>
+
+      <div>
+        <i class="ri-phone-line"></i>
+        <p>+92 332 317 0984</p>
+      </div>
+
+      <div>
+        <i class="ri-mail-line"></i>
+        <p><a href="mailto:support@company.com">muhammad.13122@iqra.edu.pk</a></p>
+      </div>
+    </div>
+
+
+    <div class="footer-icons">
+
+      <a><i class="ri-facebook-circle-fill"></i></a>
+      <a><i class="ri-twitter-x-fill"></i></a>
+      <a href="#"><i class="ri-linkedin-box-fill"></i></i></a>
+      <a href="#"><i class="ri-github-fill"></i></i></a>
+
+    </div>
+
+    </div>
+
+  </footer>
+
+
+</body>
+
+</html>
